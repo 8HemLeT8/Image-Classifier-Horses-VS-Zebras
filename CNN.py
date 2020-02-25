@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # private fanction
-def compileAndTrainTheModel(model, val_data_gen, total_val):
+def compile_and_train_the_model(model, val_data_gen_, total_val_):
     # Compile the model
     # For this tutorial, choose the ADAM optimizer and binary cross entropy loss function. To view training and
     # validation accuracy for each training epoch, pass the metrics argument.
@@ -19,26 +19,24 @@ def compileAndTrainTheModel(model, val_data_gen, total_val):
     # Train the model
     # Use the fit_generator method of the ImageDataGenerator class to train the network.
 
-    history = model.fit_generator(
+    history_ = model.fit_generator(
         train_data_gen,
-        steps_per_epoch=total_train // epochs,
+        steps_per_epoch= total_train // batch_size,
         epochs=epochs,
-        validation_data=val_data_gen,
-        validation_steps=total_val // epochs
+        validation_data=val_data_gen_,
+        validation_steps=total_val_ // batch_size
     )
+    return history_
 
 
-    return history
-
-
-def plotVSVal(history):
+def plotVSVal(history_):
     # Visualize training results
     # Now visualize the results after training the network.
-    acc = history.history['acc']
-    val_acc = history.history['val_acc']
+    acc = history_.history['acc']
+    val_acc = history_.history['val_acc']
 
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    loss = history_.history['loss']
+    val_loss = history_.history['val_loss']
 
     epochs_range = range(epochs)
 
@@ -57,14 +55,14 @@ def plotVSVal(history):
     plt.show()
 
 
-def plotVStest(history):
+def plotVStest(history_):
     # Visualize training results
     # Now visualize the results after training the network.
-    acc = history.history['acc']
-    val_acc = history.history['val_acc']
+    acc = history_.history['acc']
+    val_acc = history_.history['val_acc']
 
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    loss = history_.history['loss']
+    val_loss = history_.history['val_loss']
 
     epochs_range = range(epochs)
 
@@ -79,7 +77,7 @@ def plotVStest(history):
     plt.plot(epochs_range, loss, label='Training Loss')
     plt.plot(epochs_range, val_loss, label='Test Loss')
     plt.legend(loc='upper right')
-    plt.title('Test and Validation Loss')
+    plt.title('Training and Test Loss')
     plt.show()
 
 
@@ -87,7 +85,6 @@ def trainAugmentation():
     # Put it all together
     # Apply all the previous augmentations. Here, you applied rescale, 45 degree rotation, width shift, height shift, horizontal flip and zoom augmentation to the training images.
    image_gen_train = ImageDataGenerator(
-
         rescale=1. / 255,
         rotation_range=45,
         width_shift_range=.15,
@@ -96,24 +93,16 @@ def trainAugmentation():
         zoom_range=0.5
     )
 
-   train_data_gen = image_gen_train.flow_from_directory(batch_size=batch_size,
+   train_data_gen_ = image_gen_train.flow_from_directory(batch_size=batch_size,
                                                          directory=train_dir,
                                                          shuffle=True,
                                                          target_size=(IMG_HEIGHT, IMG_WIDTH),
                                                          class_mode='binary')
-   return train_data_gen
+   return train_data_gen_
 
-def validationAugmentation():
-        image_gen_val = ImageDataGenerator(rescale=1. / 255)
-        val_data_gen = image_gen_val.flow_from_directory(batch_size=batch_size,
-                                                 directory=validation_dir,
-                                                 target_size=(IMG_HEIGHT, IMG_WIDTH),
-                                                 class_mode='binary')
-        return val_data_gen
-
-def creatingNewModel():
+def creatingModelWithDropout():
     # Creating a new network with Dropouts
-    model_new = Sequential([
+    model_new_ = Sequential([
         Conv2D(16, 3, padding='same', activation='relu',
                input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
         MaxPooling2D(),
@@ -127,29 +116,9 @@ def creatingNewModel():
         Dense(512, activation='relu'),
         Dense(1, activation='sigmoid')
     ])
-    # Compile the model
-    # After introducing dropouts to the network, compile the model and view the layers summary.
-    model_new.compile(optimizer='adam',
-                      loss='binary_crossentropy',
-                      metrics=['accuracy'])
-    return model_new
+    return model_new_
 
-def createTheModel():
-    # The model consists of three convolution blocks with a max pool layer in each of them. There's a fully connected layer with 512 units
-    # on top of it that is activated by a relu activation function. The model outputs class probabilities based on binary classification
-    # by the sigmoid activation function.
-    model = Sequential([
-        Conv2D(16, 3, padding='same', activation='relu', input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
-        MaxPooling2D(),
-        Conv2D(32, 3, padding='same', activation='relu'),
-        MaxPooling2D(),
-        Conv2D(64, 3, padding='same', activation='relu'),
-        MaxPooling2D(),
-        Flatten(),
-        Dense(512, activation='relu'),
-        Dense(1, activation='sigmoid')
-    ])
-    return model
+
 
 # initializations
 _URL = 'https://firebasestorage.googleapis.com/v0/b/horses-vs-zebras.appspot.com/o/horses%20vs%20zebras.zip?alt=media&token=08f75cf3-af2b-49e3-bb3c-1183939d5846'
@@ -174,18 +143,24 @@ num_zebras_val = len(os.listdir(validation_zebras_dir))
 num_horses_val = len(os.listdir(validation_horses_dir))
 
 num_zebras_test = len(os.listdir(test_zebras_dir))
-num_horses_test = len(os.listdir(test_zebras_dir))
+num_horses_test = len(os.listdir(test_horses_dir))
 
 total_train = num_zebras_tr + num_horses_tr
 total_val = num_zebras_val + num_horses_val
 total_test = num_zebras_test + num_horses_test
 
-batch_size = 154
-epochs = 14
+batch_size = 128
+epochs = 19
 IMG_HEIGHT = 150
 IMG_WIDTH = 150
 
-train_image_generator = ImageDataGenerator(rescale=1./255) # Generator for our training data
+train_image_generator = ImageDataGenerator(
+    rescale=1. / 255,
+    rotation_range=45,
+    width_shift_range=.15,
+    height_shift_range=.15,
+    horizontal_flip=True,
+    zoom_range=0.5)# Generator for our training data with adding augmentation
 validation_image_generator = ImageDataGenerator(rescale=1./255) # Generator for our validation data
 test_image_generator = ImageDataGenerator(rescale=1./255) # Generator for our test data
 
@@ -200,25 +175,19 @@ val_data_gen = validation_image_generator.flow_from_directory(batch_size=batch_s
                                                               target_size=(IMG_HEIGHT, IMG_WIDTH),
                                                               class_mode='binary')
 
-test_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size,
-                                                           directory=train_dir,
+test_data_gen = test_image_generator.flow_from_directory(batch_size=batch_size,
+                                                           directory=test_dir,
                                                            shuffle=True,
                                                            target_size=(IMG_HEIGHT, IMG_WIDTH),
                                                            class_mode='binary')
 
 
-model = createTheModel()
+model = creatingModelWithDropout()
 
-
-# train_data_gen = trainAugmentation()
-# val_data_gen = validationAugmentation()
-
-
-model_new = creatingNewModel()
 # compile and train the model with validation
-# history = compileAndTrainTheModel(model,val_data_gen, total_val)
+# history = compile_and_train_the_model(model, val_data_gen, total_val)
 # plotVSVal(history)
 
 # compile and train the model with test
-history = compileAndTrainTheModel(model, test_data_gen, total_test)
+history = compile_and_train_the_model(model, test_data_gen, total_test)
 plotVStest(history)
