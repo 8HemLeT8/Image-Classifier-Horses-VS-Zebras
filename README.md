@@ -2,6 +2,6 @@
 
 Presented by Barel Kantsepolsky, Snir Yefet, Eilon Tsadok 
 
-##Overview 
+## Overview 
 Image Classifier program using three different models (simple Logistic Regression, Logistic Regression with two hidden layers and CNN ).
 All our comparisons, conclusion and Results are given in details in the Final Report which is included above. 
